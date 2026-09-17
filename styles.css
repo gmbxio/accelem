@@ -86,7 +86,7 @@ input::placeholder { color: #9aaba5; }
 .password-toggle { position: absolute; top: 0; right: 0; height: 48px; padding: 0 14px; border: 0; color: var(--green); background: none; cursor: pointer; font: 600 11px "DM Sans", sans-serif; }
 .dialog-form select { width: 100%; height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fff; font: 14px "DM Sans", sans-serif; }
 .submit-button { width: 100%; height: 50px; margin-top: 5px; }
-.form-message { min-height: 18px; margin: 11px 0 0; color: var(--green); text-align: center; font-size: 12px; }
+.form-message { min-height: 18px; margin: 11px 0 0; color: var(--green); text-align: center; font-size: 12px; }.form-message[data-error="true"] { color: #c15e49; }
 .signup-prompt { margin: 27px 0 0; padding-top: 25px; border-top: 1px solid var(--line); color: var(--muted); text-align: center; font-size: 12px; }.signup-prompt a { color: var(--green); font-weight: 700; }
 .site-footer { display: flex; justify-content: space-between; padding: 22px 0 25px; color: #8b9a94; font-size: 11px; }.footer-links { display: flex; gap: 25px; }.availability { display: flex; align-items: center; gap: 7px; }.availability i { width: 6px; height: 6px; border-radius: 50%; background: #70b987; }
 .services-section, .details-section, .pricing-section, .about-section, .contact-section { max-width: 1120px; width: 100%; margin: 0 auto; }

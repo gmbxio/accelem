@@ -46,14 +46,15 @@ document.querySelectorAll('.dialog-form').forEach((form) => {
         const endpoint = isSignup ? '/api/auth/signup' : isResetRequest ? '/api/auth/reset-request' : '/api/auth/reset';
         fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) })
             .then(async (response) => {
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 if (!response.ok) throw new Error(data.error || 'Something went wrong.');
+                message.dataset.error = '';
                 message.textContent = isSignup ? 'Account created. Opening your workspace...' : data.message;
                 if (isSignup) setTimeout(() => { window.location.href = '/dashboard.html'; }, 600);
                 if (form.id === 'new-password-form') setTimeout(() => { window.location.href = '/'; }, 1000);
                 form.reset();
             })
-            .catch((error) => { message.textContent = error.message; });
+            .catch((error) => { message.dataset.error = 'true'; message.textContent = error.message; });
     });
 });
 
