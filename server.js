@@ -82,6 +82,13 @@ const mailer = process.env.SMTP_HOST ? nodemailer.createTransport({
     secure: Number(process.env.SMTP_PORT) === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
 }) : null;
+if (mailer) {
+    mailer.verify()
+        .then(() => console.log('SMTP connection verified'))
+        .catch((error) => console.error('SMTP connection failed:', error.code || '', error.responseCode || '', error.message));
+} else {
+    console.error('SMTP is not configured: SMTP_HOST is missing');
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
