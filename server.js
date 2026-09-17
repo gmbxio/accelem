@@ -3,7 +3,7 @@ require('dotenv').config();
 const path = require('node:path');
 const fs = require('node:fs');
 const express = require('express');
-const session = require('express-session');
+const session = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const Database = require('better-sqlite3');
 const nodemailer = require('nodemailer');
@@ -79,10 +79,12 @@ const mailer = process.env.SMTP_HOST ? nodemailer.createTransport({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'development-only-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 1000 * 60 * 60 * 24 * 7 }
+    name: 'accelem-session',
+    keys: [process.env.SESSION_SECRET || 'development-only-secret'],
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24 * 7
 }));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'basic.html')));
 app.use(express.static(__dirname));
@@ -140,7 +142,10 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ user: cleanUser(user) });
 });
 
-app.post('/api/auth/logout', (req, res) => req.session.destroy(() => res.json({ success: true })));
+app.post('/api/auth/logout', (req, res) => {
+    req.session = null;
+    res.json({ success: true });
+});
 app.get('/api/auth/me', (req, res) => res.json({ user: cleanUser(database.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId)) }));
 app.post('/api/auth/reset', (req, res) => res.json({ success: true, message: 'If that email exists, reset instructions are on their way.' }));
 
