@@ -9,6 +9,7 @@ const Database = require('better-sqlite3');
 const nodemailer = require('nodemailer');
 
 const app = express();
+app.set('trust proxy', 1);
 const port = Number(process.env.PORT || 3003);
 const dataDirectory = process.env.DATA_DIR || __dirname;
 fs.mkdirSync(dataDirectory, { recursive: true });
