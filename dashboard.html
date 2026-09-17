@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>My workspace | Accelem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="portal.css">
+</head>
+<body data-page="client">
+    <div class="portal-shell"><header class="portal-header"><a class="portal-brand" href="/basic.html">accelem</a><div class="portal-actions"><span>Hello, <strong data-user-name>there</strong></span><button data-logout>Log out</button></div></header>
+        <main><section class="portal-hero"><div><span class="eyebrow">Client workspace</span><h1>Your work, clearly moving forward.</h1><p>See project progress, payment history, and updates from Accelem.</p></div><div class="portal-summary"><strong data-project-count>0</strong><span>projects with Accelem</span></div></section>
+            <section class="money-grid"><div class="money-card"><span>Paid</span><strong data-paid-total>$0.00</strong></div><div class="money-card"><span>Upcoming due</span><strong data-due-total>$0.00</strong></div><div class="money-card"><span>Total agreed</span><strong data-cost-total>$0.00</strong></div></section>
+            <section><div class="section-heading"><h2 class="portal-section-title">Project history</h2><div class="filter-bar"><input data-project-search placeholder="Search projects"><select data-project-filter><option value="all">All projects</option><option value="upcoming">Upcoming</option><option value="current">Current</option><option value="old">Old / completed</option></select></div></div><div data-projects class="project-grid"><p>Loading your workspace...</p></div></section>
+        </main>
+    </div><script src="portal.js"></script>
+</body>
+</html>

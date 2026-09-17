@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to Accelem and grow your local business.">
+    <title>Welcome to Accelem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="#login" aria-label="Accelem home">
+                <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span>accelem</span>
+            </a>
+
+            <nav class="main-nav" id="main-nav" aria-label="Main navigation">
+                <a href="#features">Features</a>
+                <a href="#resources">Docs</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#about">About us</a>
+            </nav>
+
+            <div class="header-actions">
+                <a class="login-link" href="#login">Log in</a>
+                <a class="button button-small" href="#signup" data-dialog="signup-dialog">Sign up <span aria-hidden="true">&#8599;</span></a>
+            </div>
+            <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-nav">
+                <span></span><span></span>
+            </button>
+        </header>
+
+        <main class="hero" id="login">
+            <section class="intro" aria-labelledby="page-title">
+                <p class="eyebrow"><span></span> Built for local ambition</p>
+                <h1 id="page-title">Welcome to<br><em>Accelem</em></h1>
+                <p class="hero-copy">We're here to support your local business with simple tools that help you move forward, every day.</p>
+                <div class="trust-note">
+                    <div class="avatar-stack" aria-hidden="true"><span>J</span><span>M</span><span>A</span><span>+</span></div>
+                    <p>Trusted by <strong>2,000+ </strong> local teams</p>
+                </div>
+            </section>
+
+            <section class="login-card" aria-labelledby="login-title">
+                <div class="card-heading">
+                    <div>
+                        <p class="card-kicker">Your workspace awaits</p>
+                        <h2 id="login-title">Log in to Accelem</h2>
+                    </div>
+                    <span class="status-dot" aria-label="All systems operational"></span>
+                </div>
+
+                <form id="login-form" novalidate>
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" placeholder="you@business.com" required>
+                    <p class="field-error" id="email-error" aria-live="polite"></p>
+
+                    <div class="password-label-row">
+                        <label for="password">Password</label>
+                        <a href="#reset" class="forgot-link" data-dialog="reset-dialog">Forgot password?</a>
+                    </div>
+                    <div class="password-wrap">
+                        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="6" required>
+                        <button class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+                    </div>
+                    <p class="field-error" id="password-error" aria-live="polite"></p>
+
+                    <button class="button submit-button" type="submit">Continue to workspace <span aria-hidden="true">&#8594;</span></button>
+                    <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+                </form>
+
+                <p class="signup-prompt">New to Accelem? <a href="#signup">Create your account</a></p>
+            </section>
+        </main>
+
+        <section class="services-section" id="features" aria-labelledby="services-title">
+            <div class="section-intro">
+                <p class="eyebrow"><span></span> What I do</p>
+                <h2 id="services-title">Practical support for your next stage.</h2>
+                <p>One focused partner for the work that makes a local business easier to find, trust, and grow.</p>
+            </div>
+            <div class="service-grid">
+                <article class="service-card"><span class="service-number">01</span><h3>Websites that work</h3><p>Clear, modern websites that turn local attention into calls, visits, and enquiries.</p><a href="#contact" class="text-link">Build my website <span>&#8594;</span></a></article>
+                <article class="service-card service-card-highlight"><span class="service-number">02</span><h3>Social media, handled</h3><p>Consistent posts, thoughtful content, and a social presence your customers remember.</p><a href="#contact" class="text-link">Plan my content <span>&#8594;</span></a></article>
+                <article class="service-card"><span class="service-number">03</span><h3>B2B sales support</h3><p>Sharper outreach and real conversations that help you find the right business customers.</p><a href="#contact" class="text-link">Grow my pipeline <span>&#8594;</span></a></article>
+            </div>
+        </section>
+
+        <section class="details-section" id="resources" aria-labelledby="resources-title">
+            <div class="details-copy"><p class="eyebrow"><span></span> Accelem guide</p><h2 id="resources-title">A straightforward way to get moving.</h2><p>Start with the service your business needs most, then build from there. Every project begins with a short conversation about your goals, audience, and next best step.</p><a href="#contact" class="button button-small">Start a conversation <span aria-hidden="true">&#8594;</span></a></div>
+            <div class="guide-list"><a href="#contact"><span>01</span><strong>Define your goal</strong><small>Know what a win looks like.</small><b>&#8594;</b></a><a href="#contact"><span>02</span><strong>Choose your focus</strong><small>Website, social, or B2B.</small><b>&#8594;</b></a><a href="#contact"><span>03</span><strong>Make it happen</strong><small>Simple work, steady progress.</small><b>&#8594;</b></a></div>
+        </section>
+
+        <section class="pricing-section" id="pricing" aria-labelledby="pricing-title">
+            <div class="section-intro"><p class="eyebrow"><span></span> Simple pricing</p><h2 id="pricing-title">A plan that fits the work.</h2><p>Every business is different, so we scope projects around the outcome you need.</p></div>
+            <div class="pricing-row"><div><strong>Project work</strong><span>Websites and focused campaigns</span></div><div><strong>Ongoing support</strong><span>Social media and sales momentum</span></div><a href="#contact" class="text-link">Get a tailored quote <span>&#8594;</span></a></div>
+        </section>
+
+        <section class="about-section" id="about" aria-labelledby="about-title">
+            <div class="portrait-wrap"><img src="images/photo.jpeg" alt="Portrait of the person behind Accelem"></div>
+            <div><p class="eyebrow"><span></span> The person behind it</p><h2 id="about-title">Small team. Full attention.</h2><p>I'm the person behind Accelem. I create websites for local businesses, manage social content, and support B2B sales so you can spend more time running the business itself.</p><a href="#contact" class="button button-small">Talk about your business <span aria-hidden="true">&#8594;</span></a></div>
+        </section>
+
+        <section class="contact-section" id="contact" aria-labelledby="contact-title"><div><p class="eyebrow"><span></span> Let's talk</p><h2 id="contact-title">Ready to move your business forward?</h2></div><a class="button" href="mailto:hello@accelem.com">Email me <span aria-hidden="true">&#8599;</span></a></section>
+
+        <footer class="site-footer">
+            <span>&copy; 2026 Accelem, Inc.</span>
+            <span class="footer-links"><a href="#privacy" data-dialog="privacy-dialog">Privacy</a><a href="#terms" data-dialog="terms-dialog">Terms</a><span class="availability"><i></i> Available for new projects</span></span>
+        </footer>
+    </div>
+
+    <dialog class="site-dialog" id="signup-dialog"><button class="dialog-close" type="button" aria-label="Close">&times;</button><p class="eyebrow"><span></span> Get started</p><h2>Create your Accelem account</h2><p>Leave your details and I'll be in touch to learn about your business.</p><form class="dialog-form" id="signup-form"><label for="signup-name">Your name</label><input id="signup-name" required placeholder="Your name"><label for="signup-email">Email address</label><input id="signup-email" type="email" required placeholder="you@business.com"><button class="button" type="submit">Request a conversation <span>&#8594;</span></button><p class="form-message" id="signup-message" role="status"></p></form></dialog>
+    <dialog class="site-dialog" id="reset-dialog"><button class="dialog-close" type="button" aria-label="Close">&times;</button><p class="eyebrow"><span></span> Account help</p><h2>Reset your password</h2><p>Enter your email and I'll send reset instructions when account access is connected.</p><form class="dialog-form" id="reset-form"><label for="reset-email">Email address</label><input id="reset-email" type="email" required placeholder="you@business.com"><button class="button" type="submit">Send instructions <span>&#8594;</span></button><p class="form-message" id="reset-message" role="status"></p></form></dialog>
+    <dialog class="site-dialog text-dialog" id="privacy-dialog"><button class="dialog-close" type="button" aria-label="Close">&times;</button><p class="eyebrow"><span></span> Privacy</p><h2>Your information stays purposeful.</h2><p>Accelem only uses information you share to respond to your enquiry, deliver agreed work, and improve your experience. Your details are never sold.</p></dialog>
+    <dialog class="site-dialog text-dialog" id="terms-dialog"><button class="dialog-close" type="button" aria-label="Close">&times;</button><p class="eyebrow"><span></span> Terms</p><h2>Clear expectations, always.</h2><p>Project scope, timing, payment, and ownership are agreed in writing before work begins. Questions are welcome at every stage.</p></dialog>
+    <script src="script.js"></script>
+</body>
+</html>

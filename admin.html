@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin workspace | Accelem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="portal.css">
+</head>
+<body data-page="admin">
+    <div class="portal-shell">
+        <header class="portal-header"><a class="portal-brand" href="/basic.html">accelem / admin</a><div class="portal-actions"><span>Signed in as <strong data-user-name>owner</strong></span><button data-logout>Log out</button></div></header>
+        <main>
+            <section class="portal-hero"><div><span class="eyebrow">Owner workspace</span><h1>Keep every client moving.</h1><p>Manage customers, work, and payments from one place.</p></div><div class="portal-summary"><strong><span data-client-count>0</span> / <span data-project-count>0</span></strong><span>clients / projects</span></div></section>
+            <section class="money-grid"><div class="money-card"><span>Paid earnings</span><strong data-paid-total>$0.00</strong></div><div class="money-card"><span>Upcoming dues</span><strong data-due-total>$0.00</strong></div><div class="money-card"><span>Total project value</span><strong data-cost-total>$0.00</strong></div></section>
+            <form class="admin-form" data-create-project><label>Client<select name="clientId" data-client-options required></select></label><label>Project title<input name="title" required placeholder="New website"></label><label>Service<select name="service"><option>Website</option><option>Social media</option><option>B2B sales</option></select></label><label>Total cost<input name="costCents" type="number" min="0" step="0.01" placeholder="0.00"></label><label>Paid now<input name="paidCents" type="number" min="0" step="0.01" placeholder="0.00"></label><label>Payment due<input name="paymentDueDate" type="date"></label><button type="submit">Create project</button></form>
+            <form class="admin-form client-create-form" data-create-client><label>Name<input name="name" required placeholder="Client name"></label><label>Email<input name="email" type="email" required placeholder="client@example.com"></label><label>Temporary password<input name="password" type="password" minlength="8" required placeholder="At least 8 characters"></label><label>Business<input name="businessName" placeholder="Business name"></label><label>Service<select name="service"><option>Website</option><option>Social media</option><option>B2B sales</option></select></label><button type="submit">Add client</button></form>
+            <section><div class="section-heading"><h2 class="portal-section-title">Projects</h2><div class="filter-bar"><input data-project-search placeholder="Search projects"><select data-project-filter><option value="all">All projects</option><option value="upcoming">Upcoming</option><option value="current">Current</option><option value="old">Old / completed</option></select></div></div><table class="admin-table"><thead><tr><th>Project / client</th><th>Service</th><th>Money</th><th>Status</th><th>Progress</th><th>Update</th></tr></thead><tbody data-admin-projects><tr><td colspan="6">Loading projects...</td></tr></tbody></table></section>
+            <section class="client-list"><div class="section-heading"><h2 class="portal-section-title">Clients</h2><div class="filter-bar"><input data-client-search placeholder="Search clients"><select data-client-service><option value="all">All services</option><option>Website</option><option>Social media</option><option>B2B sales</option></select></div></div><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Business</th><th>Service</th><th>Action</th></tr></thead><tbody data-admin-clients><tr><td colspan="5">Loading clients...</td></tr></tbody></table></section>
+        </main>
+    </div><script src="portal.js"></script>
+</body>
+</html>

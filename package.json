@@ -1,0 +1,25 @@
+{
+  "name": "accelem-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Accelem client project portal",
+  "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.4.1",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "nodemailer": "^10.0.10"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}

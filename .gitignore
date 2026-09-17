@@ -1,0 +1,6 @@
+node_modules/
+.npm-cache/
+.env
+accelem.db
+accelem.db-shm
+accelem.db-wal
