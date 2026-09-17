@@ -135,9 +135,16 @@ async function sendWelcomeEmail(user) {
     });
 }
 
-async function sendPasswordResetEmail(email, token) {
-    if (!mailer) return;
-    const resetUrl = `${process.env.APP_URL || ''}/?reset_token=${encodeURIComponent(token)}`;
+async function sendPasswordResetEmail(email, token, appUrl) {
+    if (!mailer) throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASSWORD.');
+    let resetOrigin;
+    try {
+        resetOrigin = new URL(appUrl);
+    } catch {
+        throw new Error('APP_URL must be a valid public URL.');
+    }
+    if (!['http:', 'https:'].includes(resetOrigin.protocol)) throw new Error('APP_URL must use http or https.');
+    const resetUrl = `${appUrl.replace(/\/$/, '')}/?reset_token=${encodeURIComponent(token)}`;
     await mailer.sendMail({
         from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
@@ -184,7 +191,14 @@ app.post('/api/auth/reset-request', async (req, res) => {
         const token = crypto.randomBytes(32).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
         database.prepare('INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(tokenHash, user.id, Date.now() + 60 * 60 * 1000);
-        sendPasswordResetEmail(user.email, token).catch((error) => console.error('Password reset email failed:', error.message));
+        const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).trim();
+        try {
+            await sendPasswordResetEmail(user.email, token, appUrl);
+        } catch (error) {
+            database.prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?').run(tokenHash);
+            console.error('Password reset email failed:', error.message);
+            return res.status(503).json({ error: 'Reset email could not be sent. Check the mail settings and try again.' });
+        }
     }
     res.json({ success: true, message: 'If that email exists, reset instructions are on their way.' });
 });
