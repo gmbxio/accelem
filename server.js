@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const express = require('express');
 const session = require('cookie-session');
 const bcrypt = require('bcryptjs');
@@ -43,6 +44,11 @@ database.exec(`
         project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
         message TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        token_hash TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        expires_at INTEGER NOT NULL
     );
 `);
 
@@ -119,6 +125,27 @@ async function notifyOwner(client) {
     });
 }
 
+async function sendWelcomeEmail(user) {
+    if (!mailer) return;
+    await mailer.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: user.email,
+        subject: 'Welcome to Accelem',
+        text: `Hi ${user.name},\n\nWelcome to Accelem. Your account is ready.\n\nLog in here: ${process.env.APP_URL || ''}/`
+    });
+}
+
+async function sendPasswordResetEmail(email, token) {
+    if (!mailer) return;
+    const resetUrl = `${process.env.APP_URL || ''}/?reset_token=${encodeURIComponent(token)}`;
+    await mailer.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Reset your Accelem password',
+        text: `Use this link to reset your Accelem password:\n\n${resetUrl}\n\nThis link expires in one hour.`
+    });
+}
+
 app.post('/api/auth/signup', async (req, res) => {
     const { name, email, password, businessName, service } = req.body;
     if (!name || !email || !password || password.length < 8) return res.status(400).json({ error: 'Name, email, and a password of at least 8 characters are required.' });
@@ -128,6 +155,7 @@ app.post('/api/auth/signup', async (req, res) => {
         req.session.userId = result.lastInsertRowid;
         const client = database.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
         notifyOwner({ ...client, businessName: client.business_name }).catch((error) => console.error('Email notification failed:', error.message));
+        sendWelcomeEmail(client).catch((error) => console.error('Welcome email failed:', error.message));
         res.status(201).json({ user: cleanUser(client) });
     } catch (error) {
         if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'An account with that email already exists.' });
@@ -148,7 +176,31 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true });
 });
 app.get('/api/auth/me', (req, res) => res.json({ user: cleanUser(database.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId)) }));
-app.post('/api/auth/reset', (req, res) => res.json({ success: true, message: 'If that email exists, reset instructions are on their way.' }));
+app.post('/api/auth/reset-request', async (req, res) => {
+    const email = req.body.email?.trim().toLowerCase();
+    const user = database.prepare('SELECT id, email FROM users WHERE email = ?').get(email);
+    if (user) {
+        database.prepare('DELETE FROM password_reset_tokens WHERE user_id = ?').run(user.id);
+        const token = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        database.prepare('INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(tokenHash, user.id, Date.now() + 60 * 60 * 1000);
+        sendPasswordResetEmail(user.email, token).catch((error) => console.error('Password reset email failed:', error.message));
+    }
+    res.json({ success: true, message: 'If that email exists, reset instructions are on their way.' });
+});
+
+app.post('/api/auth/reset', async (req, res) => {
+    const token = req.body.token;
+    const password = req.body.password;
+    if (!token || !password || password.length < 8) return res.status(400).json({ error: 'A valid reset link and password of at least 8 characters are required.' });
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const reset = database.prepare('SELECT user_id FROM password_reset_tokens WHERE token_hash = ? AND expires_at > ?').get(tokenHash, Date.now());
+    if (!reset) return res.status(400).json({ error: 'This reset link is invalid or expired.' });
+    const passwordHash = await bcrypt.hash(password, 12);
+    database.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, reset.user_id);
+    database.prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?').run(tokenHash);
+    res.json({ success: true, message: 'Password updated. You can now log in.' });
+});
 
 app.get('/api/projects', requireAuth, (req, res) => {
     const user = database.prepare('SELECT role FROM users WHERE id = ?').get(req.session.userId);

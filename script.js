@@ -38,18 +38,31 @@ document.querySelectorAll('.dialog-form').forEach((form) => {
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         const message = form.querySelector('.form-message');
-        const endpoint = form.id === 'signup-form' ? '/api/auth/signup' : '/api/auth/reset';
-        fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(form))) })
+        const isSignup = form.id === 'signup-form';
+        const isResetRequest = form.id === 'reset-form';
+        const values = Object.fromEntries(new FormData(form));
+        const token = new URLSearchParams(window.location.search).get('reset_token');
+        if (form.id === 'new-password-form') values.token = token;
+        const endpoint = isSignup ? '/api/auth/signup' : isResetRequest ? '/api/auth/reset-request' : '/api/auth/reset';
+        fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) })
             .then(async (response) => {
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Something went wrong.');
-                message.textContent = form.id === 'signup-form' ? 'Account created. Opening your workspace...' : 'If that email exists, reset instructions are on their way.';
-                if (form.id === 'signup-form') setTimeout(() => { window.location.href = '/dashboard.html'; }, 600);
+                message.textContent = isSignup ? 'Account created. Opening your workspace...' : data.message;
+                if (isSignup) setTimeout(() => { window.location.href = '/dashboard.html'; }, 600);
+                if (form.id === 'new-password-form') setTimeout(() => { window.location.href = '/'; }, 1000);
                 form.reset();
             })
             .catch((error) => { message.textContent = error.message; });
     });
 });
+
+const resetToken = new URLSearchParams(window.location.search).get('reset_token');
+if (resetToken) {
+    document.querySelector('#reset-form').hidden = true;
+    document.querySelector('#new-password-form').hidden = false;
+    document.querySelector('#reset-dialog').showModal();
+}
 
 menuToggle.addEventListener('click', () => {
     const isOpen = mainNav.classList.toggle('is-open');
