@@ -44,6 +44,8 @@ document.querySelectorAll('.dialog-form').forEach((form) => {
         const token = new URLSearchParams(window.location.search).get('reset_token');
         if (form.id === 'new-password-form') values.token = token;
         const endpoint = isSignup ? '/api/auth/signup' : isResetRequest ? '/api/auth/reset-request' : '/api/auth/reset';
+        message.dataset.error = '';
+        message.textContent = isResetRequest ? 'Sending instructions...' : '';
         fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) })
             .then(async (response) => {
                 const data = await response.json().catch(() => ({}));
