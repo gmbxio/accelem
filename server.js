@@ -56,11 +56,16 @@ addColumnIfMissing('projects', 'payment_due_date', 'TEXT');
 
 database.prepare('PRAGMA foreign_keys = ON').run();
 
-const adminEmail = process.env.ADMIN_EMAIL;
+const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD;
-if (adminEmail && adminPassword && !database.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail)) {
+if (adminEmail && adminPassword) {
     const passwordHash = bcrypt.hashSync(adminPassword, 12);
-    database.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Accelem owner', adminEmail, passwordHash, 'admin');
+    const existingAdmin = database.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+    if (existingAdmin) {
+        database.prepare('UPDATE users SET password_hash = ?, role = ? WHERE id = ?').run(passwordHash, 'admin', existingAdmin.id);
+    } else {
+        database.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Accelem owner', adminEmail, passwordHash, 'admin');
+    }
     console.log(`Admin account created for ${adminEmail}`);
 }
 
@@ -79,6 +84,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'basic.html')));
 app.use(express.static(__dirname));
 
 function cleanUser(user) {
