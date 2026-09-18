@@ -1,4 +1,3 @@
-console.log('NODE_OPTIONS is:', process.env.NODE_OPTIONS);
 require('dotenv').config();
 
 const path = require('node:path');
@@ -77,19 +76,35 @@ if (adminEmail && adminPassword) {
     console.log(`Admin account created for ${adminEmail}`);
 }
 
+// --- Mail setup -------------------------------------------------------
+// Explicit connectionTimeout/greetingTimeout/socketTimeout are critical here:
+// without them, a blocked or half-open network path (common on some hosts'
+// outbound routes) can hang the socket indefinitely instead of throwing an
+// error, so nothing ever gets logged and the request just stalls.
 const mailer = process.env.SMTP_HOST ? nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
     secure: Number(process.env.SMTP_PORT) === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    family: 4
+    family: 4, // force IPv4 - avoids broken/absent IPv6 egress routes on some hosts
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+    logger: process.env.SMTP_DEBUG === 'true',
+    debug: process.env.SMTP_DEBUG === 'true'
 }) : null;
+
 if (mailer) {
     mailer.verify()
-        .then(() => console.log('SMTP connection verified'))
-        .catch((error) => console.error('SMTP connection failed:', error.code || '', error.responseCode || '', error.message));
+        .then(() => console.log('[mail] SMTP connection verified'))
+        .catch((error) => console.error('[mail] SMTP connection failed:', {
+            code: error.code,
+            command: error.command,
+            responseCode: error.responseCode,
+            message: error.message
+        }));
 } else {
-    console.error('SMTP is not configured: SMTP_HOST is missing');
+    console.error('[mail] SMTP is not configured: SMTP_HOST is missing');
 }
 
 app.use(express.json());
@@ -170,8 +185,8 @@ app.post('/api/auth/signup', async (req, res) => {
         const result = database.prepare('INSERT INTO users (name, email, password_hash, business_name, service) VALUES (?, ?, ?, ?, ?)').run(name.trim(), email.trim().toLowerCase(), passwordHash, businessName?.trim() || null, service || null);
         req.session.userId = result.lastInsertRowid;
         const client = database.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
-        notifyOwner({ ...client, businessName: client.business_name }).catch((error) => console.error('Email notification failed:', error.message));
-        sendWelcomeEmail(client).catch((error) => console.error('Welcome email failed:', error.message));
+        notifyOwner({ ...client, businessName: client.business_name }).catch((error) => console.error('[mail] Email notification failed:', error.message));
+        sendWelcomeEmail(client).catch((error) => console.error('[mail] Welcome email failed:', error.message));
         res.status(201).json({ user: cleanUser(client) });
     } catch (error) {
         if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'An account with that email already exists.' });
@@ -192,6 +207,7 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true });
 });
 app.get('/api/auth/me', (req, res) => res.json({ user: cleanUser(database.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId)) }));
+
 app.post('/api/auth/reset-request', async (req, res) => {
     const email = req.body.email?.trim().toLowerCase();
     const user = database.prepare('SELECT id, email FROM users WHERE email = ?').get(email);
@@ -201,14 +217,22 @@ app.post('/api/auth/reset-request', async (req, res) => {
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
         database.prepare('INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(tokenHash, user.id, Date.now() + 60 * 60 * 1000);
         const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).trim();
+        console.log('[mail] reset requested for', user.email, '- attempting send...');
         try {
             await sendPasswordResetEmail(user.email, token, appUrl);
-            console.log('Password reset email sent to', user.email);
+            console.log('[mail] reset email SENT to', user.email);
         } catch (error) {
             database.prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?').run(tokenHash);
-            console.error('Password reset email failed:', error);
+            console.error('[mail] reset email FAILED:', {
+                code: error.code,
+                command: error.command,
+                responseCode: error.responseCode,
+                message: error.message
+            });
             return res.status(503).json({ error: 'Reset email could not be sent. Check the mail settings and try again.' });
         }
+    } else {
+        console.log('[mail] reset requested for unknown email:', email);
     }
     res.json({ success: true, message: 'If that email exists, reset instructions are on their way.' });
 });
