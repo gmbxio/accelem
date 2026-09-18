@@ -7,7 +7,6 @@ const express = require('express');
 const session = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const Database = require('better-sqlite3');
-const nodemailer = require('nodemailer');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -76,35 +75,41 @@ if (adminEmail && adminPassword) {
     console.log(`Admin account created for ${adminEmail}`);
 }
 
-// --- Mail setup -------------------------------------------------------
-// Explicit connectionTimeout/greetingTimeout/socketTimeout are critical here:
-// without them, a blocked or half-open network path (common on some hosts'
-// outbound routes) can hang the socket indefinitely instead of throwing an
-// error, so nothing ever gets logged and the request just stalls.
-const mailer = process.env.SMTP_HOST ? nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    family: 4, // force IPv4 - avoids broken/absent IPv6 egress routes on some hosts
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
-    logger: process.env.SMTP_DEBUG === 'true',
-    debug: process.env.SMTP_DEBUG === 'true'
-}) : null;
+// --- Mail setup (Resend HTTP API) --------------------------------------
+// Sends over plain HTTPS instead of SMTP, so it isn't subject to SMTP port
+// blocking or broken IPv6 routing to mail servers, which is what was
+// happening with nodemailer + Gmail SMTP on Render.
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const resendApiKey = process.env.RESEND_API_KEY;
+const mailFrom = process.env.MAIL_FROM;
 
-if (mailer) {
-    mailer.verify()
-        .then(() => console.log('[mail] SMTP connection verified'))
-        .catch((error) => console.error('[mail] SMTP connection failed:', {
-            code: error.code,
-            command: error.command,
-            responseCode: error.responseCode,
-            message: error.message
-        }));
+if (!resendApiKey) {
+    console.error('[mail] RESEND_API_KEY is missing - emails will not be sent');
+} else if (!mailFrom) {
+    console.error('[mail] MAIL_FROM is missing - emails will not be sent');
 } else {
-    console.error('[mail] SMTP is not configured: SMTP_HOST is missing');
+    console.log('[mail] Resend configured, sending from', mailFrom);
+}
+
+async function sendEmail({ to, subject, text }) {
+    if (!resendApiKey || !mailFrom) throw new Error('Resend is not configured. Set RESEND_API_KEY and MAIL_FROM.');
+    const response = await fetch(RESEND_API_URL, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ from: mailFrom, to, subject, text })
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const message = body?.message || `Resend request failed with status ${response.status}`;
+        const error = new Error(message);
+        error.status = response.status;
+        error.body = body;
+        throw error;
+    }
+    return body;
 }
 
 app.use(express.json());
@@ -137,12 +142,11 @@ function requireAdmin(req, res, next) {
 }
 
 async function notifyOwner(client) {
-    if (!mailer || !process.env.ADMIN_EMAIL) {
+    if (!process.env.ADMIN_EMAIL) {
         console.log(`New Accelem client: ${client.name} <${client.email}> - ${client.service || 'unspecified service'}`);
         return;
     }
-    await mailer.sendMail({
-        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    await sendEmail({
         to: process.env.ADMIN_EMAIL,
         subject: `New Accelem client: ${client.name}`,
         text: `${client.name} (${client.email}) signed up for ${client.service || 'a conversation'}. Business: ${client.businessName || 'Not provided'}.`
@@ -150,9 +154,7 @@ async function notifyOwner(client) {
 }
 
 async function sendWelcomeEmail(user) {
-    if (!mailer) return;
-    await mailer.sendMail({
-        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    await sendEmail({
         to: user.email,
         subject: 'Welcome to Accelem',
         text: `Hi ${user.name},\n\nWelcome to Accelem. Your account is ready.\n\nLog in here: ${process.env.APP_URL || ''}/`
@@ -160,7 +162,6 @@ async function sendWelcomeEmail(user) {
 }
 
 async function sendPasswordResetEmail(email, token, appUrl) {
-    if (!mailer) throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASSWORD.');
     let resetOrigin;
     try {
         resetOrigin = new URL(appUrl);
@@ -169,8 +170,7 @@ async function sendPasswordResetEmail(email, token, appUrl) {
     }
     if (!['http:', 'https:'].includes(resetOrigin.protocol)) throw new Error('APP_URL must use http or https.');
     const resetUrl = `${appUrl.replace(/\/$/, '')}/?reset_token=${encodeURIComponent(token)}`;
-    await mailer.sendMail({
-        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    await sendEmail({
         to: email,
         subject: 'Reset your Accelem password',
         text: `Use this link to reset your Accelem password:\n\n${resetUrl}\n\nThis link expires in one hour.`
@@ -223,12 +223,7 @@ app.post('/api/auth/reset-request', async (req, res) => {
             console.log('[mail] reset email SENT to', user.email);
         } catch (error) {
             database.prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?').run(tokenHash);
-            console.error('[mail] reset email FAILED:', {
-                code: error.code,
-                command: error.command,
-                responseCode: error.responseCode,
-                message: error.message
-            });
+            console.error('[mail] reset email FAILED:', { status: error.status, body: error.body, message: error.message });
             return res.status(503).json({ error: 'Reset email could not be sent. Check the mail settings and try again.' });
         }
     } else {
