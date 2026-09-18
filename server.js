@@ -202,9 +202,10 @@ app.post('/api/auth/reset-request', async (req, res) => {
         const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).trim();
         try {
             await sendPasswordResetEmail(user.email, token, appUrl);
+            console.log('Password reset email sent to', user.email);
         } catch (error) {
             database.prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?').run(tokenHash);
-            console.error('Password reset email failed:', error.message);
+            console.error('Password reset email failed:', error);
             return res.status(503).json({ error: 'Reset email could not be sent. Check the mail settings and try again.' });
         }
     }
