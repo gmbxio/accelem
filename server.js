@@ -1,3 +1,4 @@
+console.log('NODE_OPTIONS is:', process.env.NODE_OPTIONS);
 require('dotenv').config();
 
 const path = require('node:path');
